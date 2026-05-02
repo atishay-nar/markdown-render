@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* react-pdf canvas pages */
+.react-pdf__Page__canvas {
+  display: block;
+  margin: 0 auto;
+}
+.react-pdf__Page {
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
