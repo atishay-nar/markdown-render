@@ -9,7 +9,9 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "@types/cors": "^2.8.19",
     "adm-zip": "^0.5.16",
+    "cors": "^2.8.6",
     "express": "^4.19.2",
     "github-markdown-css": "^5.6.1",
     "highlight.js": "^11.10.0",

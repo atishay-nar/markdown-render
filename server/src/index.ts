@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import path from "path";
 import convertRouter from "./routes/convert";
 import { getBrowser } from "./services/pdfGenerator";
@@ -6,6 +7,7 @@ import { getBrowser } from "./services/pdfGenerator";
 const app = express();
 const PORT = process.env.PORT ?? 3001;
 
+app.use(cors({ origin: process.env.ALLOWED_ORIGIN ?? "*" }));
 app.use("/api", convertRouter);
 
 // In production, serve the built React app from client/dist

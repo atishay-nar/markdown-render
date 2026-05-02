@@ -29,7 +29,8 @@ export function useConvert() {
       body.append("file", file);
 
       // POST the zip to our Express API
-      const res = await fetch("/api/convert", { method: "POST", body });
+      const base = import.meta.env.VITE_API_URL ?? "";
+      const res = await fetch(`${base}/api/convert`, { method: "POST", body });
 
       if (!res.ok) {
         const json = await res.json().catch(() => ({ error: "Unknown error" }));
