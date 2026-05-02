@@ -10,7 +10,14 @@ export async function getBrowser(): Promise<Browser> {
   if (!browser || !browser.connected) {
     browser = await puppeteer.launch({
       headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage", // /dev/shm is 64MB in Docker; use /tmp instead
+        "--disable-gpu",
+        "--no-first-run",
+        "--disable-extensions",
+      ],
     });
   }
   return browser;
