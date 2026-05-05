@@ -1,6 +1,9 @@
 import puppeteer, { Browser } from "puppeteer";
+import pLimit from "p-limit";
 import fs from "fs";
 import path from "path";
+
+const limit = pLimit(3); // max 3 concurrent Puppeteer pages
 
 // Browser singleton — launched once, reused across all requests.
 // Avoids the 1-3 second Chromium cold-start cost per conversion.
@@ -67,17 +70,19 @@ export async function generatePdf(embeddedHtml: string): Promise<Buffer> {
 </body>
 </html>`;
 
-  const b = await getBrowser();
-  const page = await b.newPage();
-  try {
-    await page.setContent(fullHtml, { waitUntil: "networkidle0" });
-    const pdf = await page.pdf({
-      format: "A4",
-      printBackground: true, // required: renders code block background colors
-      margin: { top: "20mm", right: "20mm", bottom: "20mm", left: "20mm" },
-    });
-    return Buffer.from(pdf);
-  } finally {
-    await page.close();
-  }
+  return limit(async () => {
+    const b = await getBrowser();
+    const page = await b.newPage();
+    try {
+      await page.setContent(fullHtml, { waitUntil: "networkidle0" });
+      const pdf = await page.pdf({
+        format: "A4",
+        printBackground: true, // required: renders code block background colors
+        margin: { top: "20mm", right: "20mm", bottom: "20mm", left: "20mm" },
+      });
+      return Buffer.from(pdf);
+    } finally {
+      await page.close();
+    }
+  });
 }

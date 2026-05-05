@@ -2,10 +2,15 @@ import { Router, Request, Response } from "express";
 import multer from "multer";
 import os from "os";
 import fs from "fs";
+import { createHash } from "crypto";
+import { LRUCache } from "lru-cache";
 import { extractZip } from "../services/zipExtractor";
 import { renderMarkdown } from "../services/markdownRenderer";
 import { embedImages } from "../services/imageEmbedder";
 import { generatePdf } from "../services/pdfGenerator";
+
+// Keyed by SHA-256 of the uploaded file — max 20 PDFs cached in memory
+const pdfCache = new LRUCache<string, { buffer: Buffer; filename: string }>({ max: 20 });
 
 const router = Router();
 
@@ -27,6 +32,17 @@ router.post(
 
     try {
       const originalName = req.file!.originalname;
+
+      // SHA-256 of the raw uploaded bytes — cache hit skips the entire pipeline
+      const hash = createHash("sha256").update(fs.readFileSync(tempPath)).digest("hex");
+      const cached = pdfCache.get(hash);
+      if (cached) {
+        res.set("Content-Type", "application/pdf");
+        res.set("Content-Disposition", `inline; filename="${cached.filename}"`);
+        res.send(cached.buffer);
+        return;
+      }
+
       const isMd = originalName.toLowerCase().endsWith(".md");
 
       let markdownSource: string;
@@ -55,6 +71,8 @@ router.post(
 
       // Render HTML → PDF via headless Chromium (NOT window.print())
       const pdfBuffer = await generatePdf(embeddedHtml);
+
+      pdfCache.set(hash, { buffer: pdfBuffer, filename: pdfFilename });
 
       res.set("Content-Type", "application/pdf");
       res.set("Content-Disposition", `inline; filename="${pdfFilename}"`);
